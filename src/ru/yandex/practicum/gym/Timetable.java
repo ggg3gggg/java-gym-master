@@ -1,10 +1,10 @@
 package ru.yandex.practicum.gym;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.HashMap;
 
 public class Timetable {
 
@@ -12,31 +12,29 @@ public class Timetable {
             new TreeMap<>();
 
     public void addNewTrainingSession(TrainingSession trainingSession) {
-
         DayOfWeek day = trainingSession.getDayOfWeek();
         TimeOfDay time = trainingSession.getTimeOfDay();
 
-        timetable
-                .computeIfAbsent(day, k -> new TreeMap<>())
-                .computeIfAbsent(time, k -> new ArrayList<>())
-                .add(trainingSession);
+        TreeMap<TimeOfDay, List<TrainingSession>> sessions =
+                timetable.computeIfAbsent(day, k -> new TreeMap<>());
+
+        List<TrainingSession> trainingSessions =
+                sessions.computeIfAbsent(time, k -> new ArrayList<>());
+
+        trainingSessions.add(trainingSession);
     }
 
-    public List<TrainingSession> getTrainingSessionsForDay(DayOfWeek dayOfWeek) {
+    public TreeMap<TimeOfDay, List<TrainingSession>> getTrainingSessionsForDay(
+            DayOfWeek dayOfWeek) {
 
-        TreeMap<TimeOfDay, List<TrainingSession>> sessions = timetable.get(dayOfWeek);
+        TreeMap<TimeOfDay, List<TrainingSession>> sessions =
+                timetable.get(dayOfWeek);
 
         if (sessions == null) {
-            return new ArrayList<>();
+            return new TreeMap<>();
         }
 
-        List<TrainingSession> result = new ArrayList<>();
-
-        for (List<TrainingSession> list : sessions.values()) {
-            result.addAll(list);
-        }
-
-        return result;
+        return sessions;
     }
 
     public List<TrainingSession> getTrainingSessionsForDayAndTime(
@@ -59,12 +57,11 @@ public class Timetable {
     }
 
     public List<CounterOfTrainings> getCountByCoaches() {
-
         Map<Coach, Integer> counters = new HashMap<>();
 
-        for (TreeMap<TimeOfDay, List<TrainingSession>> sessions : timetable.values()) {
-            for (List<TrainingSession> trainingSessions : sessions.values()) {
-                for (TrainingSession trainingSession : trainingSessions) {
+        for (TreeMap<TimeOfDay, List<TrainingSession>> sessionsByTime : timetable.values()) {
+            for (List<TrainingSession> sessions : sessionsByTime.values()) {
+                for (TrainingSession trainingSession : sessions) {
 
                     Coach coach = trainingSession.getCoach();
 
